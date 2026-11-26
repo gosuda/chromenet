@@ -96,6 +96,15 @@ jobs:
         with:
           go-version: '1.27.3'
           cache: true
+      # The work directory holds the pinned source, toolchains and ninja
+      # outputs; the scripts skip downloads and unchanged compiles when it
+      # is warm. Keyed on every pinned input, per target, exact match only:
+      # a stale revision must never be reused.
+      - name: Cache the engine work directory
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/chromenet-engine
+          key: engine-work-darwin-${{ matrix.target }}-${{ hashFiles('third_party/chromium/VERSION', 'third_party/chromium/SHA256', 'third_party/chromium/patches/**', 'scripts/engine/BUILDENV', 'scripts/engine/*.py', 'scripts/engine/*.sh', 'go.mod', 'go.sum') }}
       - name: Select the newest Xcode
         run: |
           xcode=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
