@@ -14,7 +14,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: go-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -34,6 +34,9 @@ jobs:
         with:
           go-version: '1.27.3'
           cache: true
+          cache-dependency-path: |
+            go.mod
+            go.sum
       - name: Go vet and tests
         shell: bash
         run: |
