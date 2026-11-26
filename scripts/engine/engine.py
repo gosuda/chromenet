@@ -217,7 +217,14 @@ def source_revisions(src):
     deps = open(os.path.join(src, 'DEPS'), encoding='utf-8').read()
     gn = re.search(r"'gn_version': '([^']+)'", deps).group(1)
     ninja = re.search(r"'ninja_version': '([^']+)'", deps).group(1)
-    return {'clang': clang, 'rust': rust, 'gn': gn, 'ninja': ninja}
+    # The Linux linker, shipped as a CIPD package (not by update.py). The DEPS
+    # entry is conditioned on host_os == "linux", so only Linux hosts need it.
+    mold = re.search(
+        r"'package': 'chromium/buildtools/third_party/mold/mold',\s*'version': '([^']+)'",
+        deps)
+    if not mold:
+        die('mold version not found in DEPS')
+    return {'clang': clang, 'rust': rust, 'gn': gn, 'ninja': ninja, 'mold': mold.group(1)}
 
 
 def toolchain_files(revs, hosts, with_win):
@@ -233,6 +240,11 @@ def toolchain_files(revs, hosts, with_win):
                       '%s/gn/gn/%s/+/%s' % (CIPD_URL, plat, revs['gn'])))
         files.append(('cipd/infra/3pp/tools/ninja/%s/%s.zip' % (plat, revs['ninja']),
                       '%s/infra/3pp/tools/ninja/%s/+/%s' % (CIPD_URL, plat, revs['ninja'])))
+    if LINUX_HOST in hosts:
+        # mold links every Linux-hosted target; macOS hosts never fetch it,
+        # matching the host_os == "linux" condition of the DEPS entry.
+        files.append(('cipd/mold/%s.zip' % revs['mold'],
+                      '%s/chromium/buildtools/third_party/mold/mold/+/%s' % (CIPD_URL, revs['mold'])))
     if with_win:
         files.append(('cds/Win/clang-win-runtime-library-%s.tar.xz' % revs['clang'],
                       '%s/Win/clang-win-runtime-library-%s.tar.xz' % (CDS_URL, revs['clang'])))
@@ -361,6 +373,12 @@ def cmd_toolchain(args):
     os.makedirs(bin_dir, exist_ok=True)
     unzip(os.path.join(work, 'cache',
                        'cipd/infra/3pp/tools/ninja/%s/%s.zip' % (plat, revs['ninja'])), bin_dir)
+    if host == LINUX_HOST:
+        # The Linux linker. DEPS conditions this CIPD package on a Linux host;
+        # the unpacked layout must match src/buildtools/third_party/mold/cipd,
+        # where the toolchain expects the mold binary.
+        unzip(os.path.join(work, 'cache', 'cipd/mold/%s.zip' % revs['mold']),
+              os.path.join(src, 'buildtools', 'third_party', 'mold', 'cipd'))
 
     if host == LINUX_HOST:
         # The host toolchain (build tools such as protoc) always links against the amd64 sysroot.
