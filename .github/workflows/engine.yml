@@ -5,25 +5,8 @@ name: Engine
 # macOS engines build natively. release.yml calls this workflow to produce release binaries.
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'engine/**'
-      - 'scripts/engine/**'
-      - 'third_party/chromium/**'
-      - 'chrome_net.idl'
-      - 'go.mod'
-      - 'go.sum'
-      - '.github/workflows/engine.yml'
-  pull_request:
-    paths:
-      - 'engine/**'
-      - 'scripts/engine/**'
-      - 'third_party/chromium/**'
-      - 'chrome_net.idl'
-      - 'go.mod'
-      - 'go.sum'
-      - '.github/workflows/engine.yml'
+  schedule:
+    - cron: '47 4 * * 1'
   workflow_dispatch:
   workflow_call:
     inputs:
@@ -37,7 +20,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: engine-${{ github.ref }}
+  group: engine-${{ github.event_name }}-${{ inputs.ref || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -47,7 +30,7 @@ jobs:
       fail-fast: false
       matrix:
         target: [linux-amd64, linux-arm64, windows-amd64, windows-arm64]
-    runs-on: ubuntu-24.04
+    runs-on: depot-ubuntu-24.04
     timeout-minutes: 360
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -127,13 +110,11 @@ jobs:
       matrix:
         include:
           - target: linux-amd64
-            runner: ubuntu-24.04
+            runner: depot-ubuntu-24.04
           - target: linux-arm64
-            runner: ubuntu-24.04-arm
+            runner: depot-ubuntu-24.04-arm
           - target: windows-amd64
-            runner: windows-2025
-          - target: windows-arm64
-            runner: windows-11-arm
+            runner: depot-windows-2025
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     steps:
@@ -164,9 +145,7 @@ jobs:
       matrix:
         include:
           - target: darwin-arm64
-            runner: macos-15
-          - target: darwin-amd64
-            runner: macos-15-intel
+            runner: depot-macos-latest
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     steps:

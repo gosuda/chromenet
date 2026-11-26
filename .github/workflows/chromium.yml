@@ -12,7 +12,7 @@ name: Track Chromium
 
 on:
   schedule:
-    - cron: '17 */6 * * *'
+    - cron: '17 3 * * *'
   workflow_dispatch:
     inputs:
       version:
@@ -31,7 +31,7 @@ concurrency:
 
 jobs:
   pin:
-    runs-on: ubuntu-24.04
+    runs-on: depot-ubuntu-24.04
     timeout-minutes: 30
     outputs:
       branch: ${{ steps.pin.outputs.branch }}
@@ -70,7 +70,7 @@ jobs:
 
   promote:
     needs: [pin, engine]
-    runs-on: ubuntu-24.04
+    runs-on: depot-ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
