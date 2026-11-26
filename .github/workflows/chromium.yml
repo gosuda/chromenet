@@ -68,7 +68,10 @@ jobs:
               exit 0
             fi
           fi
-          if [ "$RETRY_EXISTING" = true ]; then
+          if [ "$source" != "$main" ]; then
+            # Builds from other revisions can never promote; keep them off the shared branch.
+            branch="$branch-try-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          elif [ "$RETRY_EXISTING" = true ]; then
             # Keep the failed version branch as evidence; retries get distinct refs.
             branch="$branch-retry-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
           elif git ls-remote --exit-code origin "refs/heads/$branch" >/dev/null; then
