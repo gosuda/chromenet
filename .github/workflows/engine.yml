@@ -83,7 +83,10 @@ jobs:
       fail-fast: false
       matrix:
         target: [darwin-arm64, darwin-amd64]
-    runs-on: macos-26
+    # GitHub-hosted macOS builds queue behind the shared pool while six
+    # full engine rebuilds set an 89-minute wall; the Depot macOS runner
+    # (Apple silicon) builds both Darwin targets with identical steps.
+    runs-on: depot-macos-latest
     timeout-minutes: 360
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
