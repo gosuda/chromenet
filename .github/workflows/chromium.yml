@@ -128,7 +128,7 @@ jobs:
           set -euo pipefail
           git fetch origin main --tags
           if [ "$(git rev-parse origin/main)" != "$PIN_SOURCE" ]; then
-            printf '%s\n' 'main moved since the pin was made; rerun this workflow' >&2
+            printf '%s\n' 'main moved since the pin was made; dispatch this workflow again from main with retry_existing=true for the failed version' >&2
             exit 1
           fi
           chromium=$(sed -n 's/^version=//p' third_party/chromium/VERSION)
